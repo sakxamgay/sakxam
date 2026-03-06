@@ -185,7 +185,14 @@ document.addEventListener("keydown", e=>{
     if(e.code === "KeyR" && gameOver){
         init();
     }
-});
+});canvas.addEventListener("touchstart", e=>{
+    e.preventDefault();
+    if(!gameOver){
+        bird.velocity = bird.lift;
+    } else {
+        init();
+    }
+}, { passive: false });
 
 /* ========= RESIZE ========= */
 window.addEventListener("resize", ()=>{
