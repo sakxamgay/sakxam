@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Flappy Bird Ultimate</title>
+<style>
+html,body{
+    margin:0;
+    padding:0;
+    overflow:hidden;
+}
+canvas{
+    display:block;
+}
+</style>
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+/* ========= IMAGES ========= */
+const birdImg = new Image();
+birdImg.src = "bird.png";
+
+const pipeImg = new Image();
+pipeImg.src = "pipe.png";
+
+const bgImg = new Image();
+bgImg.src = "background.png";
+
+/* ========= VARIABLES ========= */
+let bird, pipes, frame, score, gameOver;
+let bgX = 0;
+
+/* ========= INIT ========= */
+function init(){
+    bird = {
+        x: canvas.width * 0.2,
+        y: canvas.height * 0.3,
+        width: 300,
+        height: 300,
+        velocity: 0,
+        gravity: 0.2,
+        lift: -5,
+        maxFall: 10
+    };
+
+    pipes = [];
+    frame = 0;
+    score = 0;
+    gameOver = false;
+}
+
+/* ========= CREATE PIPE ========= */
+function createPipe(){
+    const gap = 420; // vertical gap for big bird
+    const minHeight = 100;
+    const maxTop = canvas.height - gap - minHeight;
+    const topHeight = Math.random() * (maxTop - minHeight) + minHeight;
+
+    pipes.push({
+        x: canvas.width,
+        width: 180,
+        top: topHeight,
+        bottom: canvas.height - topHeight - gap,
+        passed:false
+    });
+}
+
+/* ========= UPDATE BIRD ========= */
+function updateBird(){
+    bird.velocity += bird.gravity;
+    if(bird.velocity > bird.maxFall) bird.velocity = bird.maxFall;
+    bird.y += bird.velocity;
+
+    if(bird.y + bird.height >= canvas.height || bird.y <= 0){
+        gameOver = true;
+    }
+}
+
+/* ========= DRAW BACKGROUND ========= */
+function drawBackground(){
+    bgX -= 1.5;
+    if(bgX <= -canvas.width) bgX = 0;
+
+    ctx.drawImage(bgImg, bgX, 0, canvas.width, canvas.height);
+    ctx.drawImage(bgImg, bgX + canvas.width, 0, canvas.width, canvas.height);}
+
+/* ========= DRAW BIRD ========= */
+function drawBird(){
+    const drawW = bird.width * 1;
+    const drawH = bird.height * 0.6;
+    const offsetX = (drawW - bird.width) / 2;
+    const offsetY = (drawH - bird.height) / 2;
+    ctx.drawImage(birdImg, bird.x - offsetX, bird.y - offsetY, drawW, drawH);
+}
+
+/* ========= DRAW PIPES ========= */
+function drawPipes(){
+    pipes.forEach(pipe=>{
+        pipe.x -= 3;
+
+        // TOP PIPE
+        ctx.save();
+        ctx.translate(pipe.x + pipe.width/2, pipe.top/2);
+        ctx.rotate(Math.PI);
+        ctx.drawImage(pipeImg, -pipe.width/2, -pipe.top/2, pipe.width, pipe.top);
+        ctx.restore();
+
+        // BOTTOM PIPE
+        ctx.drawImage(pipeImg, pipe.x, canvas.height - pipe.bottom, pipe.width, pipe.bottom);
+
+        // SCORE
+        if(!pipe.passed && bird.x > pipe.x + pipe.width){
+            pipe.passed = true;
+            score++;
+        }// IMPROVED COLLISION
+        const padX = 30;
+        const padY = 40;
+
+        const bLeft = bird.x + padX;
+        const bRight = bird.x + bird.width - padX;
+        const bTop = bird.y + padY;
+        const bBottom = bird.y + bird.height - padY;
+
+        const pLeft = pipe.x;
+        const pRight = pipe.x + pipe.width;
+
+        if(bRight > pLeft && bLeft < pRight && (bTop < pipe.top || bBottom > canvas.height - pipe.bottom)){
+            gameOver = true;
+        }
+    });pipes = pipes.filter(pipe=> pipe.x + pipe.width > 0);
+}
+
+/* ========= DRAW SCORE ========= */
+function drawScore(){
+    ctx.fillStyle = "white";
+    ctx.font = "50px Arial";
+    ctx.fillText("Score: " + score, 40, 70);
+}
+
+/* ========= GAME OVER ========= */
+function drawGameOver(){
+    ctx.fillStyle = "red";
+    ctx.font = "80px Arial";
+    ctx.fillText("GAME OVER", canvas.width/2 - 260, canvas.height/2);
+
+    ctx.font = "40px Arial";
+    ctx.fillText("Press R to Restart", canvas.width/2 - 200, canvas.height/2 + 70);
+}/* ========= MAIN LOOP ========= */
+function loop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawBackground();
+
+    if(!gameOver){
+        if(frame % 220 === 0){ // slightly closer than very far
+            createPipe();
+        }
+
+        updateBird();
+        drawBird();
+        drawPipes();
+        drawScore();
+        frame++;
+    } else {
+        drawGameOver();
+    }
+
+    requestAnimationFrame(loop);
+}
+
+/* ========= CONTROLS ========= */
+document.addEventListener("keydown", e=>{
+    if(e.code === "Space" && !gameOver){
+        bird.velocity = bird.lift;
+    }
+
+    if(e.code === "KeyR" && gameOver){
+        init();
+    }
+});
+
+/* ========= RESIZE ========= */
+window.addEventListener("resize", ()=>{
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    init();
+});
+
+/* ========= START GAME ========= */
+init();
+loop();
+</script>
+
+</body>
+</html>
