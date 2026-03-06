@@ -122,8 +122,8 @@ function drawPipes(){
             pipe.passed = true;
             score++;
         }// IMPROVED COLLISION
-        const padX = 30;
-        const padY = 40;
+        const padX = 50;
+        const padY = 60;
 
         const bLeft = bird.x + padX;
         const bRight = bird.x + bird.width - padX;
@@ -160,7 +160,7 @@ function loop(){
     drawBackground();
 
     if(!gameOver){
-        if(frame % 220 === 0){ // slightly closer than very far
+        if(frame % 320 === 0){ // slightly closer than very far
             createPipe();
         }
 
